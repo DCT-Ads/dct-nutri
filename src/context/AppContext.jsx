@@ -50,6 +50,82 @@ function reminderSlots(spec, now = new Date()) {
   return slots;
 }
 
+const STORAGE_KEY = 'dct-nutri-v1';
+
+const defaultProfile = {
+  name: '',
+  level: 'principiante',
+  age: 30,
+  heightCm: 165,
+  weightKg: 70,
+  goalKg: 63,
+  activity: 'moderada',
+};
+
+const defaultCircle = [
+  { id: 'antonella', name: 'Antonella', points: 92 },
+  { id: 'rafael', name: 'Rafael', points: 36 },
+];
+
+function loadStore() {
+  try {
+    const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+    if (!data || data.version !== 1) return null;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+function initialStore() {
+  const saved = loadStore();
+  const today = isoDate();
+  if (!saved) {
+    return {
+      onboarded: false,
+      profile: defaultProfile,
+      waterMl: 0,
+      waterDate: today,
+      workoutsDone: [],
+      diary: [],
+      weightLog: [],
+      recipeWeek: defaultRecipeWeek,
+      shoppingChecked: {},
+      seca: emptySeca,
+      language: detectLanguage(),
+      circleMembers: defaultCircle,
+      reminders: DEFAULT_REMINDERS,
+      circleCode: makeCircleCode(),
+    };
+  }
+  return {
+    onboarded: Boolean(saved.onboarded),
+    profile: { ...defaultProfile, ...(saved.profile || {}) },
+    waterMl: saved.waterDate === today ? Number(saved.waterMl) || 0 : 0,
+    waterDate: today,
+    workoutsDone: Array.isArray(saved.workoutsDone) ? saved.workoutsDone : [],
+    diary: Array.isArray(saved.diary) ? saved.diary : [],
+    weightLog: Array.isArray(saved.weightLog) ? saved.weightLog : [],
+    recipeWeek: Array.isArray(saved.recipeWeek) ? saved.recipeWeek : defaultRecipeWeek,
+    shoppingChecked: saved.shoppingChecked && typeof saved.shoppingChecked === 'object' ? saved.shoppingChecked : {},
+    seca: { ...emptySeca, ...(saved.seca || {}) },
+    language: saved.language || detectLanguage(),
+    circleMembers: Array.isArray(saved.circleMembers) ? saved.circleMembers : defaultCircle,
+    reminders: { ...DEFAULT_REMINDERS, ...(saved.reminders || {}) },
+    circleCode: saved.circleCode || makeCircleCode(),
+  };
+}
+
+function writeStore(payload) {
+  const raw = JSON.stringify(payload);
+  try {
+    localStorage.setItem(STORAGE_KEY, raw);
+  } catch {
+    const slim = { ...payload, diary: payload.diary.map(({ preview, ...item }) => item) };
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(slim)); } catch { /* the phone is full */ }
+  }
+}
+
 const emptySeca = {
   active: false,
   finished: false,
@@ -61,36 +137,54 @@ const emptySeca = {
 };
 
 export function AppProvider({ children }) {
-  const [onboarded, setOnboarded] = useState(false);
-  const [profile, setProfile] = useState({
-    name: '',
-    level: 'principiante',
-    age: 30,
-    heightCm: 165,
-    weightKg: 70,
-    goalKg: 63,
-    activity: 'moderada',
-  });
-  const [waterMl, setWaterMl] = useState(0);
-  const [workoutsDone, setWorkoutsDone] = useState([]);
-  const [diary, setDiary] = useState([]);
-  const [weightLog, setWeightLog] = useState([]);
-  const [recipeWeek, setRecipeWeek] = useState(defaultRecipeWeek);
-  const [shoppingChecked, setShoppingChecked] = useState({});
-  const [seca, setSeca] = useState(emptySeca);
+  const [boot] = useState(initialStore);
+  const [onboarded, setOnboarded] = useState(boot.onboarded);
+  const [profile, setProfile] = useState(boot.profile);
+  const [waterMl, setWaterMl] = useState(boot.waterMl);
+  const [waterDate, setWaterDate] = useState(boot.waterDate);
+  const [workoutsDone, setWorkoutsDone] = useState(boot.workoutsDone);
+  const [diary, setDiary] = useState(boot.diary);
+  const [weightLog, setWeightLog] = useState(boot.weightLog);
+  const [recipeWeek, setRecipeWeek] = useState(boot.recipeWeek);
+  const [shoppingChecked, setShoppingChecked] = useState(boot.shoppingChecked);
+  const [seca, setSeca] = useState(boot.seca);
   const [installEvent, setInstallEvent] = useState(null);
   const [sheet, setSheet] = useState(null);
-  const [language, setLanguage] = useState(detectLanguage);
-  const [circleMembers, setCircleMembers] = useState([
-    { id: 'antonella', name: 'Antonella', points: 92 },
-    { id: 'rafael', name: 'Rafael', points: 36 },
-  ]);
-  const [reminders, setReminders] = useState(DEFAULT_REMINDERS);
-  const [circleCode, setCircleCode] = useState(makeCircleCode);
+  const [language, setLanguage] = useState(boot.language);
+  const [circleMembers, setCircleMembers] = useState(boot.circleMembers);
+  const [reminders, setReminders] = useState(boot.reminders);
+  const [circleCode, setCircleCode] = useState(boot.circleCode);
 
   useEffect(() => {
     document.documentElement.lang = language === 'pt' ? 'pt-BR' : language;
   }, [language]);
+
+  useEffect(() => {
+    const today = isoDate();
+    if (waterDate === today) return;
+    setWaterDate(today);
+    setWaterMl(0);
+  }, [waterDate]);
+
+  useEffect(() => {
+    writeStore({
+      version: 1,
+      onboarded,
+      profile,
+      waterMl,
+      waterDate,
+      workoutsDone,
+      diary,
+      weightLog,
+      recipeWeek,
+      shoppingChecked,
+      seca,
+      language,
+      circleMembers,
+      reminders,
+      circleCode,
+    });
+  }, [onboarded, profile, waterMl, waterDate, workoutsDone, diary, weightLog, recipeWeek, shoppingChecked, seca, language, circleMembers, reminders, circleCode]);
 
   useEffect(() => {
     if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return undefined;
@@ -280,6 +374,7 @@ export function AppProvider({ children }) {
     function resetSession() {
       setOnboarded(false);
       setWaterMl(0);
+      setWaterDate(isoDate());
       setWorkoutsDone([]);
       setDiary([]);
       setWeightLog([]);
@@ -287,10 +382,7 @@ export function AppProvider({ children }) {
       setShoppingChecked({});
       setSeca(emptySeca);
       setSheet(null);
-      setCircleMembers([
-        { id: 'antonella', name: 'Antonella', points: 92 },
-        { id: 'rafael', name: 'Rafael', points: 36 },
-      ]);
+      setCircleMembers(defaultCircle);
       setReminders(DEFAULT_REMINDERS);
       setCircleCode(makeCircleCode());
     }

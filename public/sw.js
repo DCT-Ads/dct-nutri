@@ -1,4 +1,4 @@
-const CACHE = 'dct-nutri-v2';
+const CACHE = 'dct-nutri-v3';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
