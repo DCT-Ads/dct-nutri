@@ -33,7 +33,7 @@ export default function Perfil() {
       <PageTitle kicker={t('perfil.k')} title={t('nav.profile')} />
       <div className="mb-4"><LanguageSwitch /></div>
       <div className="mb-4 flex items-center gap-3">
-        <span className="h-14 w-14 rounded-full bg-gradient-to-br from-[#F4C4D7] to-magenta" />
+        <img src="/logo.png" alt="" className="h-14 w-14 rounded-2xl object-cover shadow-card" />
         <div>
           <p className="font-display text-2xl">{form.name || t('perfil.fallback')}</p>
           <p className="text-sm text-coach">{t('perfil.meta', { n: formatKcal(plan.target) })}</p>

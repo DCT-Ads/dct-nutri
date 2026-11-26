@@ -70,7 +70,10 @@ export default function Onboarding() {
 
   return (
     <div className="flex min-h-dvh flex-col px-5 pb-8 pt-8">
-      <div className="mb-4 flex justify-end"><LanguageSwitch /></div>
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <img src="/logo.png" alt="DCT Nutri" className="h-24 w-24 rounded-[24px] object-cover shadow-card" />
+        <LanguageSwitch />
+      </div>
       <p className="text-[13px] text-coach">{t('onb.kicker')}</p>
       <h1 className="mt-1 font-display text-[34px] leading-none text-carbon">{t('onb.title')}</h1>
       <div className="mt-4 flex gap-1.5">

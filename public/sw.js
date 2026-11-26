@@ -1,8 +1,8 @@
-const CACHE = 'gluteos-poderosos-v1';
+const CACHE = 'dct-nutri-v2';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE).then((cache) => cache.addAll(['/', '/inicio', '/manifest.json', '/favicon.svg'])),
+    caches.open(CACHE).then((cache) => cache.addAll(['/', '/inicio', '/manifest.json', '/logo.png'])),
   );
   self.skipWaiting();
 });

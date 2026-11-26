@@ -55,8 +55,8 @@ export default function Home() {
   return (
     <div>
       <header className="mb-3 flex items-center gap-3">
-        <Link to="/perfil" aria-label="Ver mi perfil" className="grid h-[46px] w-[46px] place-items-center rounded-full border-2 border-magenta bg-white p-0.5">
-          <span className="h-full w-full rounded-full bg-gradient-to-br from-[#F4C4D7] to-rosaPill" />
+        <Link to="/perfil" aria-label="Ver mi perfil" className="h-[52px] w-[52px] shrink-0 overflow-hidden rounded-[14px] shadow-card">
+          <img src="/logo.png" alt="DCT Nutri" className="h-full w-full object-cover" />
         </Link>
         <div className="min-w-0 flex-1">
           <p className="text-[13px] text-coach">{t('home.space')}</p>
